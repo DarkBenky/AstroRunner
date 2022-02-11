@@ -53,7 +53,7 @@ class World():
         block = pygame.image.load("Osticle/block.png").convert_alpha()
         block_lava = pygame.image.load("Osticle/block_lava.png").convert_alpha()
         spike = pygame.image.load("Osticle/Spike.png").convert_alpha()
-        
+        gold = pygame.image.load("Osticle/gold_bar.png").convert_alpha()
         for row in data:
             col_count = 0
             for tile in row:
@@ -78,6 +78,13 @@ class World():
                     img_rect.y = row_count * tile_size
                     tile = (img,img_rect)
                     self.tile_list.append(tile)
+                if tile == 4:
+                    img = pygame.transform.scale(gold,(tile_size,tile_size))
+                    img_rect = img.get_rect()
+                    img_rect.x = col_count * tile_size
+                    img_rect.y = row_count * tile_size
+                    tile = (img,img_rect)
+                    self.tile_list.append(tile)
                 col_count += 1
             row_count += 1
     
@@ -94,7 +101,7 @@ while running:
             
     # draw background
     screen.blit(space,(0,0))
-    
+    # draw grid
     world.draw()
     pygame.display.update()
     
