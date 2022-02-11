@@ -13,27 +13,28 @@ pygame.display.set_caption("Astro Runner")
 # game variables
 running = True
 tile_size = 50
+clock = pygame.time.Clock()
 
 world_data = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,1],
+    [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+    [1,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,3,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
+    [1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,3,1],
+    [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,0,0,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
 
@@ -93,7 +94,50 @@ class World():
             screen.blit(tile[0], tile[1])
                  
 world = World(world_data)     
-   
+
+class Player():
+    def __init__(self,x,y):
+        img = pygame.image.load("Runner/astro.png").convert_alpha()
+        self.image = pygame.transform.scale(img,(40,80))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.velocity = 0
+        self.jumped = False
+    def  update(self):
+        # delta variables
+        delta_x = 0
+        delta_y = 0
+        # get key input
+        key = pygame.key.get_pressed()
+        if key[pygame.K_SPACE] and self.jumped == False:
+            self.jumped = True
+            self.velocity = -1
+        if key[pygame.K_SPACE] == False:
+            self.jumped = False
+        if key[pygame.K_a]:
+            delta_x -= 1
+        if key[pygame.K_d]:
+            delta_x += 1
+        # gravity
+        self.velocity += 0.01
+        if self.velocity > 3:
+            self.velocity = 3    
+        delta_y += self.velocity    
+        # check for colision
+        
+        # update plyer coridinate
+        self.rect.x += delta_x
+        self.rect.y += delta_y
+        if self.rect.bottom > height:
+            self.rect.bottom = height
+            delta_y = 0
+        # draw
+        screen.blit(self.image,self.rect)
+    
+        
+player = Player(100,height-130)
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -103,6 +147,9 @@ while running:
     screen.blit(space,(0,0))
     # draw grid
     world.draw()
+    # draw player
+    player.update()
     pygame.display.update()
-    
+
+    clock.tick(300)    
 pygame.quit()
