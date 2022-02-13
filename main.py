@@ -1,6 +1,7 @@
 from turtle import width
 import pygame
 from pygame.locals import *
+import random
 
 pygame.init()
 
@@ -97,33 +98,90 @@ world = World(world_data)
 
 class Player():
     def __init__(self,x,y):
-        img = pygame.image.load("Runner/astro.png").convert_alpha()
-        self.image = pygame.transform.scale(img,(40,80))
+        self.images_right = []
+        self.images_left = []
+        self.images_jump_right = []
+        self.images_jump_left = []
+        self.index = 0
+        self.counter1 = 0
+        self.direction = 0
+        self.jump = 0
+        # load images of walk to array
+        for num in range(1,4): 
+            img_right = pygame.image.load(f"Runner/astro{num}.png").convert_alpha()
+            img_right = pygame.transform.scale(img_right,(40,80))
+            left = pygame.transform.flip(img_right,True,False)
+            self.images_right.append(img_right)
+            self.images_left.append(left)
+        # load images of jump to array
+        for num in range(0,4): 
+            img_jump = pygame.image.load(f"Runner/astro_fire{num}.png").convert_alpha()
+            img_jump = pygame.transform.scale(img_jump,(40,80))
+            img_jump_left = pygame.transform.flip(img_jump,True,False)
+            self.images_jump_left.append(img_jump_left)
+            self.images_jump_right.append(img_jump)
+        self.image = self.images_right[self.index]    
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.velocity = 0
         self.jumped = False
     def  update(self):
-        # delta variables
+        # variables
         delta_x = 0
         delta_y = 0
+        anim_cooldown = 30
+        
         # get key input
         key = pygame.key.get_pressed()
         if key[pygame.K_SPACE] and self.jumped == False:
             self.jumped = True
-            self.velocity = -1
+            self.velocity = -6
+            self.jump = 1 
         if key[pygame.K_SPACE] == False:
             self.jumped = False
+            self.jump = 0
         if key[pygame.K_a]:
             delta_x -= 1
+            self.counter += 1
+            self.direction = -1
         if key[pygame.K_d]:
-            delta_x += 1
+            delta_x += 1.5
+            self.counter += 1
+            self.direction = 1
+        if key[pygame.K_d] == False and key[pygame.K_a] == False:
+            self.counter = 0
+            self.index = 0
+            if self.direction == 1:
+                self.image = self.images_right[self.index]
+            if self.direction == -1:
+                self.image = self.images_left[self.index]
         # gravity
-        self.velocity += 0.01
-        if self.velocity > 3:
-            self.velocity = 3    
-        delta_y += self.velocity    
+        self.velocity += 0.1
+        if self.velocity > 4:
+            self.velocity = 4    
+        delta_y += self.velocity
+        # animation walk
+        if self.counter > anim_cooldown:
+            self.counter = 0
+            self.index += 1
+            if self.index >= len(self.images_right):
+                self.index = 0
+            if self.direction == 1:
+                self.image = self.images_right[self.index]
+            if self.direction == -1:
+                self.image = self.images_left[self.index]
+    
+        
+        if self.jump == 1 and self.direction == 1:
+            index_jump = random.randint(0, len(self.images_jump_right)-1)
+            self.image = self.images_jump_right[index_jump]
+        if self.jump == 1 and self.direction == -1:
+            index_jump = random.randint(0, len(self.images_jump_right)-1)
+            self.image = self.images_jump_left[index_jump]
+            
+        
+        
         # check for colision
         
         # update plyer coridinate
