@@ -1,4 +1,4 @@
-from turtle import width
+
 import pygame
 from pygame.locals import *
 import random
@@ -93,6 +93,7 @@ class World():
     def draw(self):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
+            
                  
 world = World(world_data)     
 
@@ -124,6 +125,8 @@ class Player():
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
         self.velocity = 0
         self.jumped = False
     def  update(self):
@@ -171,19 +174,27 @@ class Player():
                 self.image = self.images_right[self.index]
             if self.direction == -1:
                 self.image = self.images_left[self.index]
-    
-        
+        # jump animation
         if self.jump == 1 and self.direction == 1:
             index_jump = random.randint(0, len(self.images_jump_right)-1)
             self.image = self.images_jump_right[index_jump]
         if self.jump == 1 and self.direction == -1:
             index_jump = random.randint(0, len(self.images_jump_right)-1)
             self.image = self.images_jump_left[index_jump]
-            
-        
-        
-        # check for colision
-        
+        # check for collision
+        for tile in world.tile_list:
+            # check for x collision
+            if tile[1].colliderect(self.rect.x+delta_x, self.rect.y,self.width,self.height):
+                delta_x = 0
+            # check for collision y position
+            if tile[1].colliderect(self.rect.x, self.rect.y+delta_y,self.width,self.height):
+                # check bolow the ground 
+                if self.velocity < 0:
+                    delta_y = tile[1].bottom - self.rect.top
+                    self.velocity = 0
+                # check about ground collision
+                elif self.velocity >= 0:
+                    delta_y = tile[1].top - self.rect.bottom    
         # update plyer coridinate
         self.rect.x += delta_x
         self.rect.y += delta_y
@@ -192,6 +203,7 @@ class Player():
             delta_y = 0
         # draw
         screen.blit(self.image,self.rect)
+        
     
         
 player = Player(100,height-130)
