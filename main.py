@@ -144,6 +144,8 @@ class Player():
             img_jump_left = pygame.transform.flip(img_jump,True,False)
             self.images_jump_left.append(img_jump_left)
             self.images_jump_right.append(img_jump)
+        self.death_image = pygame.image.load("Ghost/Ghost.png").convert_alpha()
+        self.death_image = pygame.transform.scale(self.death_image,(40,60))
         self.image = self.images_right[self.index]    
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -225,14 +227,17 @@ class Player():
             # check for collision with lava
             if pygame.sprite.spritecollide(self,lava_group,False):
                 game_over = True
-                print(game_over)
+            
+        if game_over == True:
+            self.image = self.death_image
+            self.rect.y -= 1 
                
-            # update player coridinates
-            self.rect.x += delta_x
-            self.rect.y += delta_y
-            if self.rect.bottom > height:
-                self.rect.bottom = height
-                delta_y = 0
+        # update player coridinates
+        self.rect.x += delta_x
+        self.rect.y += delta_y
+        if self.rect.bottom > height:
+            self.rect.bottom = height
+            delta_y = 0
         # draw
         screen.blit(self.image,self.rect)
         
