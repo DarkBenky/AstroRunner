@@ -15,7 +15,8 @@ pygame.display.set_caption("Astro Runner")
 running = True
 tile_size = 50 
 clock = pygame.time.Clock()
-game_over = False 
+game_over = False
+restart_image = pygame.image.load("Button/Restard.png").convert_alpha()
 
 world_data = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -46,6 +47,33 @@ space = pygame.transform.scale(space,(1000,1000))
 
 # classes
 
+class Button():
+    def __init__(self,x,y,image):
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.clicked = False
+    def draw(self):
+        
+        # get mouse position
+        pos = pygame.mouse.get_pos()
+        action = False
+        # check mouse over
+        if self.rect.collidepoint(pos):
+            # check mouse click
+            if pygame.mouse.get_pressed()[0] == True and self.clicked ==  False:
+                self.clicked = True
+                action = True
+        if pygame.mouse.get_pressed()[0] == False:
+            self.clicked = False
+            action = False
+                
+        # drow button
+        screen.blit(self.image,self.rect)
+        return action
+    
+button = Button(width // 2 - 100   , height // 2  , restart_image)
 class Enemy(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
@@ -122,38 +150,7 @@ world = World(world_data)
 
 class Player():
     def __init__(self,x,y):
-        self.images_right = []
-        self.images_left = []
-        self.images_jump_right = []
-        self.images_jump_left = []
-        self.index = 0
-        self.counter1 = 0
-        self.direction = 0
-        self.jump = 0
-        # load images of walk to array
-        for num in range(1,4): 
-            img_right = pygame.image.load(f"Runner/astro{num}.png").convert_alpha()
-            img_right = pygame.transform.scale(img_right,(40,80))
-            left = pygame.transform.flip(img_right,True,False)
-            self.images_right.append(img_right)
-            self.images_left.append(left)
-        # load images of jump to array
-        for num in range(0,4): 
-            img_jump = pygame.image.load(f"Runner/astro_fire{num}.png").convert_alpha()
-            img_jump = pygame.transform.scale(img_jump,(40,80))
-            img_jump_left = pygame.transform.flip(img_jump,True,False)
-            self.images_jump_left.append(img_jump_left)
-            self.images_jump_right.append(img_jump)
-        self.death_image = pygame.image.load("Ghost/Ghost.png").convert_alpha()
-        self.death_image = pygame.transform.scale(self.death_image,(40,60))
-        self.image = self.images_right[self.index]    
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.width = self.image.get_width()
-        self.height = self.image.get_height()
-        self.velocity = 0
-        self.jumped = False
+        self.reset(x,y)
     def  update(self):
         # variables
         delta_x = 0
@@ -240,7 +237,39 @@ class Player():
             delta_y = 0
         # draw
         screen.blit(self.image,self.rect)
-        
+    def reset(self,x,y):
+        self.images_right = []
+        self.images_left = []
+        self.images_jump_right = []
+        self.images_jump_left = []
+        self.index = 0
+        self.counter1 = 0
+        self.direction = 0
+        self.jump = 0
+        # load images of walk to array
+        for num in range(1,4): 
+            img_right = pygame.image.load(f"Runner/astro{num}.png").convert_alpha()
+            img_right = pygame.transform.scale(img_right,(40,80))
+            left = pygame.transform.flip(img_right,True,False)
+            self.images_right.append(img_right)
+            self.images_left.append(left)
+        # load images of jump to array
+        for num in range(0,4): 
+            img_jump = pygame.image.load(f"Runner/astro_fire{num}.png").convert_alpha()
+            img_jump = pygame.transform.scale(img_jump,(40,80))
+            img_jump_left = pygame.transform.flip(img_jump,True,False)
+            self.images_jump_left.append(img_jump_left)
+            self.images_jump_right.append(img_jump)
+        self.death_image = pygame.image.load("Ghost/Ghost.png").convert_alpha()
+        self.death_image = pygame.transform.scale(self.death_image,(40,60))
+        self.image = self.images_right[self.index]    
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        self.velocity = 0
+        self.jumped = False
     
         
 player = Player(100,height-130)
@@ -266,6 +295,10 @@ while running:
         # draw lava group
     lava_group.draw(screen)
     
+    if game_over == True:
+        if button.draw():
+          player.reset(100,height-130)
+          game_over = False  
     pygame.display.update()
 
     clock.tick(300)    
