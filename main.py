@@ -160,7 +160,7 @@ class Player():
         if game_over == False:
             # get key input
             key = pygame.key.get_pressed()
-            if key[pygame.K_SPACE] and self.jumped == False:
+            if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
                 self.jumped = True
                 self.velocity = -6
                 self.jump = 1 
@@ -205,6 +205,7 @@ class Player():
                 index_jump = random.randint(0, len(self.images_jump_right)-1)
                 self.image = self.images_jump_left[index_jump]
             # check for collision
+            self.in_air = True
             for tile in world.tile_list:
                 # check for x collision
                 if tile[1].colliderect(self.rect.x+delta_x, self.rect.y,self.width,self.height):
@@ -218,6 +219,8 @@ class Player():
                     # check about ground collision
                     elif self.velocity >= 0:
                         delta_y = tile[1].top - self.rect.bottom
+                        self.velocity = 0
+                        self.in_air = False
             # check for collision with enemies
             if pygame.sprite.spritecollide(self,spike_group,False):
                 game_over = True
@@ -270,6 +273,7 @@ class Player():
         self.height = self.image.get_height()
         self.velocity = 0
         self.jumped = False
+        self.in_air = True
     
         
 player = Player(100,height-130)
