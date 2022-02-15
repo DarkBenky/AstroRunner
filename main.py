@@ -16,7 +16,8 @@ running = True
 tile_size = 50 
 clock = pygame.time.Clock()
 game_over = False
-restart_image = pygame.image.load("Button/Restard.png").convert_alpha()
+main_menu = True
+
 
 world_data = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -30,7 +31,7 @@ world_data = [
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
     [1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,4,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
     [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
@@ -44,7 +45,9 @@ world_data = [
 # load images
 space = pygame.image.load("bg/space.png").convert_alpha()
 space = pygame.transform.scale(space,(1000,1000))
-
+start_img = pygame.image.load("Button/Start.png").convert_alpha()
+exit_img = pygame.image.load("Button/Exit.png").convert_alpha()
+restart_image = pygame.image.load("Button/Restard.png").convert_alpha()
 # classes
 
 class Button():
@@ -74,6 +77,8 @@ class Button():
         return action
     
 button = Button(width // 2 - 100   , height // 2  , restart_image)
+start_button = Button(width // 2 -350 , height // 2 , start_img)
+exit_button = Button(width // 2 + 150 , height // 2 , exit_img)
 class Enemy(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
@@ -198,10 +203,10 @@ class Player():
                 if self.direction == -1:
                     self.image = self.images_left[self.index]
             # jump animation
-            if self.jump == 1 and self.direction == 1:
+            if self.jump == 1 and self.direction == 1 :
                 index_jump = random.randint(0, len(self.images_jump_right)-1)
                 self.image = self.images_jump_right[index_jump]
-            if self.jump == 1 and self.direction == -1:
+            if self.jump == 1 and self.direction == -1 :
                 index_jump = random.randint(0, len(self.images_jump_right)-1)
                 self.image = self.images_jump_left[index_jump]
             # check for collision
@@ -287,23 +292,31 @@ while running:
           
     # draw background
     screen.blit(space,(0,0))
-    # draw grid
-    world.draw()
-    # draw player
-    player.update()
-    if game_over == False:
-        # update movement 
-        spike_group.update()
-    # draw enemy spike
-    spike_group.draw(screen)
-        # draw lava group
-    lava_group.draw(screen)
     
-    if game_over == True:
-        if button.draw():
-          player.reset(100,height-130)
-          game_over = False  
+    # draw buttons
+    if main_menu == True:
+        if exit_button.draw():
+            running = False
+        if start_button.draw():
+            main_menu = False
+    else:
+        # draw grid
+        world.draw()
+        # draw player
+        player.update()
+        if game_over == False:
+            # update movement 
+            spike_group.update()
+        # draw enemy spike
+        spike_group.draw(screen)
+            # draw lava group
+        lava_group.draw(screen)
+        
+        if game_over == True:
+            if button.draw():
+                player.reset(100,height-130)
+                game_over = False  
     pygame.display.update()
-
+    # clock
     clock.tick(300)    
 pygame.quit()
