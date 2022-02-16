@@ -2,6 +2,7 @@
 import pygame
 from pygame.locals import *
 import random
+import pickle
 
 pygame.init()
 
@@ -17,9 +18,11 @@ tile_size = 50
 clock = pygame.time.Clock()
 game_over = False
 main_menu = True
+level = 1
+max_level = 2
 
-
-world_data = [
+# create world 
+world_data1 = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,1],
@@ -30,17 +33,41 @@ world_data = [
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
-    [1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,4,3,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
     [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
+    [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
+
+world_data2 = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,1],
+    [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+    [1,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
+    [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,1,1,1,1,2,2,1,2,2,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+]
+
 
 # load images
 space = pygame.image.load("bg/space.png").convert_alpha()
@@ -48,8 +75,27 @@ space = pygame.transform.scale(space,(1000,1000))
 start_img = pygame.image.load("Button/Start.png").convert_alpha()
 exit_img = pygame.image.load("Button/Exit.png").convert_alpha()
 restart_image = pygame.image.load("Button/Restard.png").convert_alpha()
-# classes
+# functions
 
+def reset_level(level):
+    player.reset(100,height-130)
+    spike_group.empty()
+    lava_group.empty()
+    exit_group.empty()
+    # load data for world
+    if level == 1:
+        world_data = world_data1
+        world = World(world_data)   
+    if level == 2:
+        world_data = world_data2
+        world = World(world_data)
+    else:
+        world_data = world_data1
+        world = World(world_data)
+    
+    return world
+    
+# classes
 class Button():
     def __init__(self,x,y,image):
         self.image = image
@@ -109,6 +155,17 @@ class Lava(pygame.sprite.Sprite):
 
 lava_group = pygame.sprite.Group()
 
+class Exit(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load("Portal/portal.png").convert_alpha()
+        self.image = pygame.transform.scale(img,(tile_size,tile_size * 1.5))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+    
+exit_group = pygame.sprite.Group()
+        
 class World():
     def __init__(self,data):
         # variables
@@ -135,14 +192,10 @@ class World():
                     lava_group.add(lava)
                 if tile == 3:
                     spike = Enemy(col_count * tile_size +10 , row_count * tile_size + 15)
-                    spike_group.add(spike)
-                # if tile == 4:
-                #     img = pygame.transform.scale(gold,(tile_size,tile_size))
-                #     img_rect = img.get_rect()
-                #     img_rect.x = col_count * tile_size
-                #     img_rect.y = row_count * tile_size
-                #     tile = (img,img_rect)
-                #     self.tile_list.append(tile)
+                    spike_group.add(spike) 
+                if tile == 4:
+                    exit = Exit(col_count * tile_size , row_count * tile_size - (tile_size // 2))
+                    exit_group.add(exit)
                 col_count += 1
             row_count += 1
     
@@ -150,8 +203,16 @@ class World():
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
             
-                 
-world = World(world_data)     
+# load data for world
+if level == 1:
+    world_data = world_data1
+    world = World(world_data)   
+if level == 2:
+    world_data = world_data2
+    world = World(world_data)
+else:
+    world_data = world_data1
+    world = World(world_data)
 
 class Player():
     def __init__(self,x,y):
@@ -232,6 +293,9 @@ class Player():
             # check for collision with lava
             if pygame.sprite.spritecollide(self,lava_group,False):
                 game_over = True
+            # check for collision with portal
+            if pygame.sprite.spritecollide(self,exit_group,False):
+                game_over = "Win"
             
         if game_over == True:
             self.image = self.death_image
@@ -311,11 +375,29 @@ while running:
         spike_group.draw(screen)
             # draw lava group
         lava_group.draw(screen)
+            # draw portal 
+        exit_group.draw(screen)
         
         if game_over == True:
             if button.draw():
-                player.reset(100,height-130)
-                game_over = False  
+                world_data = []
+                world = reset_level(level)
+                game_over = False
+        # if player completed level
+        if game_over == "Win":
+            # reset level and go to next level
+            level += 1
+            if level <= max_level:
+                # reset level
+                world_data = []
+                world = reset_level(level)
+                game_over = False
+            else:
+                if button.draw():
+                    level = 1
+                    world_data = []
+                    world = reset_level(level)
+                    game_over = False
     pygame.display.update()
     # clock
     clock.tick(300)    
