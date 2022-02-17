@@ -38,7 +38,7 @@ world_data1 = [
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
     [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
@@ -61,7 +61,7 @@ world_data2 = [
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
     [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,1,1,1,1,2,2,1,2,2,2,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
@@ -153,7 +153,19 @@ class Lava(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+
 lava_group = pygame.sprite.Group()
+
+class Coin(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load("Osticle/gold_bar.png").convert_alpha()
+        self.image = pygame.transform.scale(img,(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+coin_group = pygame.sprite.Group()
 
 class Exit(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -197,6 +209,9 @@ class World():
                     exit = Exit(col_count * tile_size , row_count * tile_size - (tile_size // 2))
                     exit_group.add(exit)
                 col_count += 1
+                if tile == 5:
+                    coin = Coin(col_count * tile_size , row_count * tile_size)
+                    coin_group.add(coin)
             row_count += 1
     
     def draw(self):
@@ -377,7 +392,8 @@ while running:
         lava_group.draw(screen)
             # draw portal 
         exit_group.draw(screen)
-        
+            # draw coins
+        coin_group.draw(screen)
         if game_over == True:
             if button.draw():
                 world_data = []
