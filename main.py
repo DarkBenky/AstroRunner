@@ -12,6 +12,13 @@ height = 1000
 screen = pygame.display.set_mode((width,height))
 pygame.display.set_caption("Astro Runner")
 
+# fonts
+font_score = pygame.font.SysFont("Consolas" , size= 40)
+font = pygame.font.SysFont("Consolas" , size= 90)
+# colors
+white = (255,255,255)
+orange = (255,140,0)
+
 # game variables
 running = True
 tile_size = 50 
@@ -20,6 +27,7 @@ game_over = False
 main_menu = True
 level = 1
 max_level = 2
+score = 0
 
 # create world 
 world_data1 = [
@@ -38,7 +46,7 @@ world_data1 = [
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
     [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
@@ -61,7 +69,7 @@ world_data2 = [
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
     [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,5,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,1,1,1,1,2,2,1,2,2,2,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
@@ -77,11 +85,25 @@ exit_img = pygame.image.load("Button/Exit.png").convert_alpha()
 restart_image = pygame.image.load("Button/Restard.png").convert_alpha()
 # functions
 
+def draw_text(text , font , text_color , x , y):
+    img = font.render(text,True,text_color)
+    screen.blit(img, (x, y))
+
 def reset_level(level):
+    # global variables
+    global score
+    score = 0
+    # reset player position
     player.reset(100,height-130)
+    # clear sprite groups
     spike_group.empty()
     lava_group.empty()
     exit_group.empty()
+    coin_group.empty()
+    # coin that will show with score
+    score_coin = Coin(tile_size // 2 ,tile_size -50)
+    coin_group.add(score_coin)
+    
     # load data for world
     if level == 1:
         world_data = world_data1
@@ -155,6 +177,20 @@ class Lava(pygame.sprite.Sprite):
 
 lava_group = pygame.sprite.Group()
 
+class Coin(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load("Osticle/gold_bar.png").convert_alpha()
+        self.image = pygame.transform.scale(img,(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+coin_group = pygame.sprite.Group()
+
+# coin that will show with score
+score_coin = Coin(tile_size // 2 ,tile_size -50)
+coin_group.add(score_coin)
 class Exit(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
@@ -196,6 +232,9 @@ class World():
                 if tile == 4:
                     exit = Exit(col_count * tile_size , row_count * tile_size - (tile_size // 2))
                     exit_group.add(exit)
+                if tile == 5:
+                    coin = Coin(col_count * tile_size, row_count * tile_size)
+                    coin_group.add(coin)
                 col_count += 1
             row_count += 1
     
@@ -215,6 +254,7 @@ else:
     world = World(world_data)
 
 class Player():
+    
     def __init__(self,x,y):
         self.reset(x,y)
     def  update(self):
@@ -222,7 +262,9 @@ class Player():
         delta_x = 0
         delta_y = 0
         anim_cooldown = 30
+        # global variables
         global game_over
+        global score
         if game_over == False:
             # get key input
             key = pygame.key.get_pressed()
@@ -296,6 +338,10 @@ class Player():
             # check for collision with portal
             if pygame.sprite.spritecollide(self,exit_group,False):
                 game_over = "Win"
+            # check for collision with coin
+            if pygame.sprite.spritecollide(self,coin_group,True):
+                score += 1
+            
             
         if game_over == True:
             self.image = self.death_image
@@ -353,7 +399,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-          
+        
     # draw background
     screen.blit(space,(0,0))
     
@@ -371,14 +417,19 @@ while running:
         if game_over == False:
             # update movement 
             spike_group.update()
+        # draw score
+        draw_text("  "+ str(score) , font_score , white , tile_size - 10 , 10 )
         # draw enemy spike
         spike_group.draw(screen)
             # draw lava group
         lava_group.draw(screen)
             # draw portal 
         exit_group.draw(screen)
+            # draw coins
+        coin_group.draw(screen)
         
         if game_over == True:
+            draw_text(" GAME OVER ", font , orange , (width // 2 ) -250, height // 2.5)
             if button.draw():
                 world_data = []
                 world = reset_level(level)
@@ -393,6 +444,7 @@ while running:
                 world = reset_level(level)
                 game_over = False
             else:
+                draw_text(" YOU WIN" , font , orange , (width // 2 ) -220, height // 2.5 )
                 if button.draw():
                     level = 1
                     world_data = []
