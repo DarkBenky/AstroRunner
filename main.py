@@ -2,8 +2,11 @@
 import pygame
 from pygame.locals import *
 import random
-import pickle
+from pygame import mixer
 
+# incialization
+pygame.mixer.pre_init(44100,-16,2,512)
+mixer.init()
 pygame.init()
 
 width = 1000
@@ -83,6 +86,16 @@ space = pygame.transform.scale(space,(1000,1000))
 start_img = pygame.image.load("Button/Start.png").convert_alpha()
 exit_img = pygame.image.load("Button/Exit.png").convert_alpha()
 restart_image = pygame.image.load("Button/Restard.png").convert_alpha()
+# load sound effects and bg music
+coin_fx = pygame.mixer.Sound("music/coin.wav")
+coin_fx.set_volume(0.4)
+jump_fx = pygame.mixer.Sound("music/jump.wav")
+jump_fx.set_volume(0.4)
+bg_music = pygame.mixer.Sound('music/bg-music.mp3')
+bg_music.set_volume(0.1)
+bg_music.play(loops = -1)
+game_over_fx = pygame.mixer.Sound("music/game_over.wav")
+game_over_fx.set_volume(0.4)
 # functions
 
 def draw_text(text , font , text_color , x , y):
@@ -269,9 +282,10 @@ class Player():
             # get key input
             key = pygame.key.get_pressed()
             if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
+                jump_fx.play()
                 self.jumped = True
                 self.velocity = -6
-                self.jump = 1 
+                self.jump = 1
             if key[pygame.K_SPACE] == False:
                 self.jumped = False
                 self.jump = 0
@@ -331,15 +345,18 @@ class Player():
                         self.in_air = False
             # check for collision with enemies
             if pygame.sprite.spritecollide(self,spike_group,False):
+                game_over_fx.play()
                 game_over = True
             # check for collision with lava
             if pygame.sprite.spritecollide(self,lava_group,False):
+                
                 game_over = True
             # check for collision with portal
             if pygame.sprite.spritecollide(self,exit_group,False):
                 game_over = "Win"
             # check for collision with coin
             if pygame.sprite.spritecollide(self,coin_group,True):
+                coin_fx.play()
                 score += 1
             
             
