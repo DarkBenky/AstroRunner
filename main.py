@@ -1,4 +1,5 @@
 
+from numpy import tile
 import pygame
 from pygame.locals import *
 import random
@@ -42,13 +43,13 @@ world_data1 = [
     [1,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
+    [1,0,0,6,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
+    [1,0,7,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
     [1,0,0,0,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
@@ -95,7 +96,7 @@ bg_music = pygame.mixer.Sound('music/bg-music.mp3')
 bg_music.set_volume(0.1)
 bg_music.play(loops = -1)
 game_over_fx = pygame.mixer.Sound("music/game_over.wav")
-game_over_fx.set_volume(0.4)
+game_over_fx.set_volume(0.8)
 # functions
 
 def draw_text(text , font , text_color , x , y):
@@ -113,6 +114,7 @@ def reset_level(level):
     lava_group.empty()
     exit_group.empty()
     coin_group.empty()
+    platform_group.empty()
     # coin that will show with score
     score_coin = Coin(tile_size // 2 ,tile_size -50)
     coin_group.add(score_coin)
@@ -190,6 +192,31 @@ class Lava(pygame.sprite.Sprite):
 
 lava_group = pygame.sprite.Group()
 
+class Platform(pygame.sprite.Sprite):
+    def __init__(self,x,y,move_x,move_y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load("Osticle/platform.png").convert_alpha()
+        self.image = pygame.transform.scale(img,(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.move_counter = 0
+        self.direction = 1
+        self.move_x = move_x
+        self.move_y = move_y
+        
+    def update(self):
+        self.rect.x += self.direction * self.move_x
+        self.rect.y += self.direction * self.move_y 
+        self.move_counter += 1
+        if self.move_counter > 50:
+            self.direction *= -1
+            self.move_counter *= -1
+        
+
+        
+platform_group = pygame.sprite.Group()
+
 class Coin(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
@@ -248,6 +275,12 @@ class World():
                 if tile == 5:
                     coin = Coin(col_count * tile_size, row_count * tile_size)
                     coin_group.add(coin)
+                if tile == 6:
+                    platform = Platform(col_count* tile_size, row_count * tile_size,1,0)
+                    platform_group.add(platform)
+                if tile == 7:
+                    platform = Platform(col_count* tile_size, row_count * tile_size,0,1)
+                    platform_group.add(platform)
                 col_count += 1
             row_count += 1
     
@@ -434,6 +467,7 @@ while running:
         if game_over == False:
             # update movement 
             spike_group.update()
+            platform_group.update()
         # draw score
         draw_text("  "+ str(score) , font_score , white , tile_size - 10 , 10 )
         # draw enemy spike
@@ -444,6 +478,8 @@ while running:
         exit_group.draw(screen)
             # draw coins
         coin_group.draw(screen)
+            # draw platforms
+        platform_group.draw(screen)
         
         if game_over == True:
             draw_text(" GAME OVER ", font , orange , (width // 2 ) -250, height // 2.5)
@@ -469,5 +505,5 @@ while running:
                     game_over = False
     pygame.display.update()
     # clock
-    clock.tick(300)    
+    clock.tick(240)    
 pygame.quit()
