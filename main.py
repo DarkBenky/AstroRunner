@@ -43,17 +43,17 @@ world_data1 = [
     [1,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,6,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
+    [1,0,6,0,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
-    [1,0,7,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
+    [1,0,0,0,0,7,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
     [1,0,0,0,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
+    [1,0,0,7,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
+    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
 
@@ -212,9 +212,7 @@ class Platform(pygame.sprite.Sprite):
         if self.move_counter > 50:
             self.direction *= -1
             self.move_counter *= -1
-        
-
-        
+              
 platform_group = pygame.sprite.Group()
 
 class Coin(pygame.sprite.Sprite):
@@ -281,6 +279,9 @@ class World():
                 if tile == 7:
                     platform = Platform(col_count* tile_size, row_count * tile_size,0,1)
                     platform_group.add(platform)
+                if tile == 8:
+                    platform = Platform(col_count* tile_size, row_count * tile_size,1,1)
+                    platform_group.add(platform)
                 col_count += 1
             row_count += 1
     
@@ -308,6 +309,7 @@ class Player():
         delta_x = 0
         delta_y = 0
         anim_cooldown = 30
+        col_threshold = 20
         # global variables
         global game_over
         global score
@@ -391,8 +393,25 @@ class Player():
             if pygame.sprite.spritecollide(self,coin_group,True):
                 coin_fx.play()
                 score += 1
-            
-            
+            # check for collision with platforms
+            for platform in platform_group:
+                # collision in x direction
+                if platform.rect.colliderect(self.rect.x+delta_x, self.rect.y,self.width,self.height):
+                    delta_x = 0
+                # collision in y direction
+                if platform.rect.colliderect(self.rect.x, self.rect.y+delta_y,self.width,self.height):
+                    # check if bellow
+                    if abs((self.rect.top + delta_y) -platform.rect.bottom ) < col_threshold:
+                        self.velocity = 0
+                        delta_y = platform.rect.bottom - self.rect.top
+                    # check if above platform
+                    elif abs((self.rect.bottom + delta_y) -platform.rect.top ) < col_threshold:
+                        self.rect.bottom = platform.rect.top - 1
+                        delta_y = 0
+                        self.in_air = False
+                    # move side ways with platform
+                    if platform.move_x != 0:
+                        self.rect.x += platform.direction
         if game_over == True:
             self.image = self.death_image
             self.rect.y -= 1 
