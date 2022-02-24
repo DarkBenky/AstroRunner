@@ -1,9 +1,13 @@
 
+from numpy import tile
 import pygame
 from pygame.locals import *
 import random
-import pickle
+from pygame import mixer
 
+# incialization
+pygame.mixer.pre_init(44100,-16,2,512)
+mixer.init()
 pygame.init()
 
 width = 1000
@@ -39,17 +43,17 @@ world_data1 = [
     [1,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
+    [1,0,6,0,0,0,0,0,1,1,0,0,0,0,0,0,3,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
     [1,0,0,0,0,0,2,1,1,0,0,0,0,1,1,1,2,2,1,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
+    [1,0,0,0,0,7,1,0,0,0,0,0,0,1,1,1,1,1,1,1],
     [1,0,0,0,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
+    [1,0,0,7,1,1,1,1,2,2,1,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,4,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
+    [1,0,0,0,0,0,0,0,1,1,0,0,0,0,3,3,3,0,0,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
 
@@ -83,6 +87,16 @@ space = pygame.transform.scale(space,(1000,1000))
 start_img = pygame.image.load("Button/Start.png").convert_alpha()
 exit_img = pygame.image.load("Button/Exit.png").convert_alpha()
 restart_image = pygame.image.load("Button/Restard.png").convert_alpha()
+# load sound effects and bg music
+coin_fx = pygame.mixer.Sound("music/coin.wav")
+coin_fx.set_volume(0.4)
+jump_fx = pygame.mixer.Sound("music/jump.wav")
+jump_fx.set_volume(0.4)
+bg_music = pygame.mixer.Sound('music/bg-music.mp3')
+bg_music.set_volume(0.1)
+bg_music.play(loops = -1)
+game_over_fx = pygame.mixer.Sound("music/game_over.wav")
+game_over_fx.set_volume(0.8)
 # functions
 
 def draw_text(text , font , text_color , x , y):
@@ -100,6 +114,7 @@ def reset_level(level):
     lava_group.empty()
     exit_group.empty()
     coin_group.empty()
+    platform_group.empty()
     # coin that will show with score
     score_coin = Coin(tile_size // 2 ,tile_size -50)
     coin_group.add(score_coin)
@@ -177,6 +192,29 @@ class Lava(pygame.sprite.Sprite):
 
 lava_group = pygame.sprite.Group()
 
+class Platform(pygame.sprite.Sprite):
+    def __init__(self,x,y,move_x,move_y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load("Osticle/platform.png").convert_alpha()
+        self.image = pygame.transform.scale(img,(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.move_counter = 0
+        self.direction = 1
+        self.move_x = move_x
+        self.move_y = move_y
+        
+    def update(self):
+        self.rect.x += self.direction * self.move_x
+        self.rect.y += self.direction * self.move_y 
+        self.move_counter += 1
+        if self.move_counter > 50:
+            self.direction *= -1
+            self.move_counter *= -1
+              
+platform_group = pygame.sprite.Group()
+
 class Coin(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
@@ -235,6 +273,15 @@ class World():
                 if tile == 5:
                     coin = Coin(col_count * tile_size, row_count * tile_size)
                     coin_group.add(coin)
+                if tile == 6:
+                    platform = Platform(col_count* tile_size, row_count * tile_size,1,0)
+                    platform_group.add(platform)
+                if tile == 7:
+                    platform = Platform(col_count* tile_size, row_count * tile_size,0,1)
+                    platform_group.add(platform)
+                if tile == 8:
+                    platform = Platform(col_count* tile_size, row_count * tile_size,1,1)
+                    platform_group.add(platform)
                 col_count += 1
             row_count += 1
     
@@ -262,6 +309,7 @@ class Player():
         delta_x = 0
         delta_y = 0
         anim_cooldown = 30
+        col_threshold = 20
         # global variables
         global game_over
         global score
@@ -269,9 +317,10 @@ class Player():
             # get key input
             key = pygame.key.get_pressed()
             if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
+                jump_fx.play()
                 self.jumped = True
                 self.velocity = -6
-                self.jump = 1 
+                self.jump = 1
             if key[pygame.K_SPACE] == False:
                 self.jumped = False
                 self.jump = 0
@@ -331,18 +380,38 @@ class Player():
                         self.in_air = False
             # check for collision with enemies
             if pygame.sprite.spritecollide(self,spike_group,False):
+                game_over_fx.play()
                 game_over = True
             # check for collision with lava
             if pygame.sprite.spritecollide(self,lava_group,False):
+                
                 game_over = True
             # check for collision with portal
             if pygame.sprite.spritecollide(self,exit_group,False):
                 game_over = "Win"
             # check for collision with coin
             if pygame.sprite.spritecollide(self,coin_group,True):
+                coin_fx.play()
                 score += 1
-            
-            
+            # check for collision with platforms
+            for platform in platform_group:
+                # collision in x direction
+                if platform.rect.colliderect(self.rect.x+delta_x, self.rect.y,self.width,self.height):
+                    delta_x = 0
+                # collision in y direction
+                if platform.rect.colliderect(self.rect.x, self.rect.y+delta_y,self.width,self.height):
+                    # check if bellow
+                    if abs((self.rect.top + delta_y) -platform.rect.bottom ) < col_threshold:
+                        self.velocity = 0
+                        delta_y = platform.rect.bottom - self.rect.top
+                    # check if above platform
+                    elif abs((self.rect.bottom + delta_y) -platform.rect.top ) < col_threshold:
+                        self.rect.bottom = platform.rect.top - 1
+                        delta_y = 0
+                        self.in_air = False
+                    # move side ways with platform
+                    if platform.move_x != 0:
+                        self.rect.x += platform.direction
         if game_over == True:
             self.image = self.death_image
             self.rect.y -= 1 
@@ -417,6 +486,7 @@ while running:
         if game_over == False:
             # update movement 
             spike_group.update()
+            platform_group.update()
         # draw score
         draw_text("  "+ str(score) , font_score , white , tile_size - 10 , 10 )
         # draw enemy spike
@@ -427,6 +497,8 @@ while running:
         exit_group.draw(screen)
             # draw coins
         coin_group.draw(screen)
+            # draw platforms
+        platform_group.draw(screen)
         
         if game_over == True:
             draw_text(" GAME OVER ", font , orange , (width // 2 ) -250, height // 2.5)
@@ -452,5 +524,5 @@ while running:
                     game_over = False
     pygame.display.update()
     # clock
-    clock.tick(300)    
+    clock.tick(240)    
 pygame.quit()
