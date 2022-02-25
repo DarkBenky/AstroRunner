@@ -1,5 +1,4 @@
 
-from numpy import tile
 import pygame
 from pygame.locals import *
 import random
@@ -133,6 +132,7 @@ def reset_level(level):
     return world
     
 # classes
+
 class Button():
     def __init__(self,x,y,image):
         self.image = image
